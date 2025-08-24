@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import tiny.ledger.entity.Movement;
 import tiny.ledger.service.LedgerService;
-import tiny.ledger.util.MoneyUtils;
 
 import java.time.Instant;
 import java.util.List;
@@ -44,7 +43,7 @@ public class LedgerController {
     public TransactionResponse recordTransaction(@RequestHeader(value = "Idempotency-Key", required = false) String idemKey,
                                                  @Valid @RequestBody TransactionRequest request) {
         Movement movement = ledgerService.recordMovement(
-                MoneyUtils.parseCents(request.amountInCents()),
+                request.amountInCents(),
                 Movement.MovementType.valueOf(request.type().toUpperCase()),
                 request.description(),
                 idemKey

@@ -31,13 +31,13 @@ paths:
               deposit:
                 summary: Deposit example
                 value:
-                  amountInCents: "5000"
+                  amountInCents: 5000
                   type: "DEPOSIT"
                   description: "Initial deposit"
               withdrawal:
                 summary: Withdrawal example
                 value:
-                  amountInCents: "1000"
+                  amountInCents: 1000
                   type: "WITHDRAWAL"
                   description: "Coffee purchase"
       responses:
@@ -106,9 +106,9 @@ components:
         - type
       properties:
         amountInCents:
-          type: string
-          description: Transaction amount in cents (e.g., "1250" for $12.50)
-          example: "5000"
+          type: number
+          description: Transaction amount in cents (e.g., 1250 for $12.50)
+          example: 5000
         type:
           type: string
           enum: [DEPOSIT, WITHDRAWAL]
@@ -131,9 +131,9 @@ components:
           enum: [DEPOSIT, WITHDRAWAL]
           example: "DEPOSIT"
         amountInCents:
-          type: string
+          type: number
           description: Transaction amount in cents
-          example: "5000"
+          example: 5000
         description:
           type: string
           description: Transaction description

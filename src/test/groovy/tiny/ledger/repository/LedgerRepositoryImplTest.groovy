@@ -143,7 +143,7 @@ class LedgerRepositoryImplTest extends Specification {
 
         when:
         def savedMovements = movements.parallelStream()
-                .map { movement -> repository.save(movement) }
+                .map { movement -> repository.save((Movement) movement) }
                 .toList()
 
         then:

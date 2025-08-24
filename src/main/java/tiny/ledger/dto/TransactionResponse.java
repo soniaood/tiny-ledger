@@ -1,12 +1,10 @@
 package tiny.ledger.dto;
 
-import tiny.ledger.util.MoneyUtils;
-
 import java.time.Instant;
 
 public record TransactionResponse(
     long id,
-    String amountInCents,
+    long amountInCents,
     Instant createdOn,
     String description,
     String type
@@ -14,7 +12,7 @@ public record TransactionResponse(
     public static TransactionResponse fromMovement(tiny.ledger.entity.Movement movement) {
         return new tiny.ledger.dto.TransactionResponse(
                 movement.id(),
-                MoneyUtils.formatCents(movement.amountInCents()),
+                movement.amountInCents(),
                 movement.createdOn(),
                 movement.description(),
                 movement.type().name()

@@ -64,7 +64,7 @@ class LedgerControllerTest extends Specification {
 
     def "Record valid deposit transaction with no idempotency key"() {
         given: "a valid deposit transaction"
-        def transactionRequest = new TransactionRequest("10000", "Test deposit", "DEPOSIT")
+        def transactionRequest = new TransactionRequest(10000, "Test deposit", "DEPOSIT")
 
         when: "the deposit transaction is recorded"
         def result = target.recordTransaction(null, transactionRequest)
@@ -81,7 +81,7 @@ class LedgerControllerTest extends Specification {
 
     def "Record valid withdrawal transaction with idempotency key"() {
         given: "a valid withdrawal transaction"
-        def transactionRequest = new TransactionRequest("5000", "Test withdrawal", "WITHDRAWAL")
+        def transactionRequest = new TransactionRequest(5000, "Test withdrawal", "WITHDRAWAL")
         def idempotencyKey = "unique-idempotency-key"
 
         when: "the withdrawal transaction is recorded"
@@ -108,7 +108,7 @@ class LedgerControllerTest extends Specification {
         1 * ledgerService.getCurrentBalanceInCents() >> balance
 
         and: "the result contains the expected balance"
-        result.balanceInCents() == balance.toString()
+        result.balanceInCents() == balance
         result.date() != null
 
         and: "no more interactions are present"
