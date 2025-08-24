@@ -115,4 +115,17 @@ class LedgerServiceTest extends Specification {
         and: "no more interactions are present"
         0 * _
     }
+
+    def "Record movement with negative amount"() {
+        when: "recordMovement is called with an invalid transaction type"
+        target.recordMovement(-10000L, Movement.MovementType.DEPOSIT, "Invalid transaction", "key")
+
+        then: "an exception is thrown"
+        def e = thrown(IllegalArgumentException)
+        e.message == "Transaction amount must be greater than zero."
+
+        and: "no interactions with the ledger service"
+        0 * _
+    }
+
 }

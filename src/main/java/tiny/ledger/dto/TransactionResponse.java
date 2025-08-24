@@ -7,7 +7,7 @@ import java.time.Instant;
 public record TransactionResponse(
     long id,
     String amountInCents,
-    Instant date,
+    Instant createdOn,
     String description,
     String type
 ) {

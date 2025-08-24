@@ -25,8 +25,8 @@ public class LedgerService {
                                    Movement.MovementType type,
                                    String description,
                                    String idempotencyKey) {
-        if (amountInCents == 0) {
-            throw new IllegalArgumentException("Transaction amount cannot be zero.");
+        if (amountInCents <= 0) {
+            throw new IllegalArgumentException("Transaction amount must be greater than zero.");
         }
 
         if (type == Movement.MovementType.WITHDRAWAL &&
