@@ -98,6 +98,29 @@ curl -X POST http://localhost:8080/transactions \
 ./gradlew test
 ```
 
+### API Local Testing
+A comprehensive test script is provided to test all API functionality:
+
+```bash
+# Make the script executable
+chmod +x test-api.sh
+
+# Run the application
+./gradlew bootRun
+
+# In another terminal, run the test script
+./test-api.sh
+```
+
+The test script covers:
+- Balance checking and transaction recording
+- Deposits, withdrawals, and transaction history
+- Idempotency key functionality
+- Input validation and error handling
+- Pagination testing
+
+**Note**: The test script requires `jq` for JSON formatting.
+
 ## Architecture & Design Decisions
 
 ### Money Precision
