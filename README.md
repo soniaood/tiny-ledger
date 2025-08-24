@@ -26,7 +26,7 @@ The API will be available at `http://localhost:8080`
 ## API 
 For complete API details and specification, refer to the API specification file: [`spec.yaml`](src/main/resources/static/spec.yaml).
 
-### 1. Record a deposit
+### 1. Record a transaction (deposit or withdrawal)
 ```bash
 curl -X POST http://localhost:8080/transactions \
   -H "Content-Type: application/json" \
@@ -44,14 +44,7 @@ curl -X POST http://localhost:8080/transactions \
 }
 ```
 
-### 2. Make a withdrawal
-```bash
-curl -X POST http://localhost:8080/transactions \
-  -H "Content-Type: application/json" \
-  -d '{"amountInCents":"1000","type":"WITHDRAWAL","description":"Coffee purchase"}'
-```
-
-### 3. Check Current Balance
+### 2. Check Current Balance
 ```bash
 curl http://localhost:8080/balance
 ```
