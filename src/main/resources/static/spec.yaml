@@ -41,7 +41,7 @@ paths:
                   type: "WITHDRAWAL"
                   description: "Coffee purchase"
       responses:
-        '200':
+        '201':
           description: Transaction recorded successfully
           content:
             application/json:
@@ -106,7 +106,8 @@ components:
         - type
       properties:
         amountInCents:
-          type: number
+          type: integer
+          format: int64
           description: Transaction amount in cents (e.g., 1250 for $12.50)
           example: 5000
         type:
@@ -131,7 +132,8 @@ components:
           enum: [DEPOSIT, WITHDRAWAL]
           example: "DEPOSIT"
         amountInCents:
-          type: number
+          type: integer
+          format: int64
           description: Transaction amount in cents
           example: 5000
         description:
@@ -166,9 +168,10 @@ components:
       type: object
       properties:
         balanceInCents:
-          type: string
+          type: integer
+          format: int64
           description: Current balance in cents
-          example: "4000"
+          example: 4000
         asOfTime:
           type: string
           format: date-time

@@ -1,10 +1,12 @@
 package tiny.ledger.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import tiny.ledger.dto.BalanceResponse;
 import tiny.ledger.dto.ListResponse;
 import tiny.ledger.dto.TransactionRequest;
@@ -27,6 +29,7 @@ public class LedgerController {
     }
 
     @GetMapping("/transactions")
+    @ResponseStatus(HttpStatus.OK)
     public ListResponse<TransactionResponse> getTransactions(@RequestParam(required = false) Integer limit,
                                                              @RequestParam(required = false) Integer offset) {
 
@@ -35,11 +38,13 @@ public class LedgerController {
 
         }
         List<Movement> movements = ledgerService.getMovementHistory(limit, offset);
-        return new ListResponse<>(movements.stream().map(TransactionResponse::fromMovement).toList(),
-                                          limit, offset, movements.size());
+        return new ListResponse<>(movements.stream()
+                                           .map(TransactionResponse::fromMovement).toList(),
+                                  limit, offset, movements.size());
     }
 
     @PostMapping("/transactions")
+    @ResponseStatus(HttpStatus.CREATED)
     public TransactionResponse recordTransaction(@RequestHeader(value = "Idempotency-Key", required = false) String idemKey,
                                                  @Valid @RequestBody TransactionRequest request) {
         Movement movement = ledgerService.recordMovement(
@@ -52,6 +57,7 @@ public class LedgerController {
     }
 
     @GetMapping("/balance")
+    @ResponseStatus(HttpStatus.OK)
     public BalanceResponse getCurrentBalance() {
         return BalanceResponse.fromBalanceAtInstant(
                 ledgerService.getCurrentBalanceInCents(),

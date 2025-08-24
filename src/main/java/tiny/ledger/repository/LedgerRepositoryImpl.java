@@ -20,18 +20,17 @@ public class LedgerRepositoryImpl implements LedgerRepository {
 
     @Override
     public Movement save(Movement movement) {
-        if (movement.idempotencyKey() != null) {
-            Optional<Long> existingId = Optional.ofNullable(idsByIdempotencyKey.get(movement.idempotencyKey()));
-            if (existingId.isPresent()) {
-                return tinyLedger.get(existingId.get());
-            }
-        }
-
         long newId = idCounter.incrementAndGet();
+
+        long currentBalance = getCurrentBalanceInCents();
+        long newBalance = movement.type() == Movement.MovementType.DEPOSIT
+                          ? currentBalance + movement.amountInCents()
+                          : currentBalance - movement.amountInCents();
 
         Movement newMovement = new Movement(newId,
                                             movement.type(),
                                             movement.amountInCents(),
+                                            newBalance,
                                             Instant.now(),
                                             movement.description(),
                                             movement.idempotencyKey());
@@ -39,6 +38,7 @@ public class LedgerRepositoryImpl implements LedgerRepository {
         if (movement.idempotencyKey() != null) {
             idsByIdempotencyKey.put(movement.idempotencyKey(), newId);
         }
+
         return newMovement;
     }
 
@@ -54,7 +54,8 @@ public class LedgerRepositoryImpl implements LedgerRepository {
     @Override
     public long getCurrentBalanceInCents() {
         return tinyLedger.values().stream()
-                .mapToLong(movement -> movement.type() == Movement.MovementType.DEPOSIT ? movement.amountInCents() : -movement.amountInCents())
-                .sum();
+                         .max(Comparator.comparing(Movement::createdOn))
+                         .map(Movement::balanceAfterInCents)
+                         .orElse(0L);
     }
 }
