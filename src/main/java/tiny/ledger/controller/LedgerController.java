@@ -37,7 +37,7 @@ public class LedgerController {
         }
         List<Movement> movements = ledgerService.getMovementHistory(limit, offset);
         return new ListResponse<>(movements.stream().map(TransactionResponse::fromMovement).toList(),
-                                          limit, offset);
+                                          limit, offset, movements.size());
     }
 
     @PostMapping("/transactions")

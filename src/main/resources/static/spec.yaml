@@ -1,0 +1,187 @@
+openapi: 3.0.3
+info:
+  title: Tiny Ledger API
+  description: A simple ledger API for recording financial transactions
+  version: 1.0.0
+  contact:
+    name: Sonia Pereira
+    url: https://github.com/soniaood/tiny-ledger
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+paths:
+  /transactions:
+    post:
+      summary: Record a new transaction
+      description: Creates a new deposit or withdrawal transaction
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Optional key to prevent duplicate transactions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionRequest'
+            examples:
+              deposit:
+                summary: Deposit example
+                value:
+                  amountInCents: "5000"
+                  type: "DEPOSIT"
+                  description: "Initial deposit"
+              withdrawal:
+                summary: Withdrawal example
+                value:
+                  amountInCents: "1000"
+                  type: "WITHDRAWAL"
+                  description: "Coffee purchase"
+      responses:
+        '200':
+          description: Transaction recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict, e.g., insufficient funds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: Get transaction history
+      description: Retrieves a paginated list of transactions, newest first
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: All
+          description: Maximum number of transactions to return
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of transactions to skip
+      responses:
+        '200':
+          description: Transaction history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionListResponse'
+  /balance:
+    get:
+      summary: Get current balance
+      description: Returns the current account balance in cents
+      responses:
+        '200':
+          description: Current balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+components:
+  schemas:
+    TransactionRequest:
+      type: object
+      required:
+        - amountInCents
+        - type
+      properties:
+        amountInCents:
+          type: string
+          description: Transaction amount in cents (e.g., "1250" for $12.50)
+          example: "5000"
+        type:
+          type: string
+          enum: [DEPOSIT, WITHDRAWAL]
+          description: Type of transaction
+          example: "DEPOSIT"
+        description:
+          type: string
+          description: Optional transaction description
+          example: "Initial deposit"
+    TransactionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique transaction identifier
+          example: 1
+        type:
+          type: string
+          enum: [DEPOSIT, WITHDRAWAL]
+          example: "DEPOSIT"
+        amountInCents:
+          type: string
+          description: Transaction amount in cents
+          example: "5000"
+        description:
+          type: string
+          description: Transaction description
+          example: "Initial deposit"
+        createdOn:
+          type: string
+          format: date-time
+          description: Transaction creation timestamp
+          example: "2024-01-15T10:30:00Z"
+    TransactionListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionResponse'
+        limit:
+          type: integer
+          description: Maximum number of items requested
+          example: 50
+        offset:
+          type: integer
+          description: Number of items skipped
+          example: 0
+        count:
+          type: integer
+          description: Actual number of items returned
+          example: 5
+    BalanceResponse:
+      type: object
+      properties:
+        balanceInCents:
+          type: string
+          description: Current balance in cents
+          example: "4000"
+        asOfTime:
+          type: string
+          format: date-time
+          description: Timestamp when balance was calculated
+          example: "2024-01-15T10:35:00Z"
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code
+          example: "ILLEGAL_STATE"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Insufficient funds for this transaction"

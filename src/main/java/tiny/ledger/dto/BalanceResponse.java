@@ -8,10 +8,10 @@ public record BalanceResponse(
     String balanceInCents,
     Instant date) {
 
-    public static BalanceResponse fromBalanceAtInstant(long balanceInCents, Instant now) {
+    public static BalanceResponse fromBalanceAtInstant(long balanceInCents, Instant asOfTime) {
         return new BalanceResponse(
                 MoneyUtils.formatCents(balanceInCents),
-                now
+                asOfTime
         );
     }
 }

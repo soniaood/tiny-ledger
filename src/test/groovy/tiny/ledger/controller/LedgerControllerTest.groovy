@@ -25,6 +25,7 @@ class LedgerControllerTest extends Specification {
         and: "the result contains the expected transaction"
         result.data().size() == 1
         result.data().asList().get(0).id() == movement.id()
+        result.count() == 1
 
         and: "no more interactions are present"
         0 * _
@@ -43,6 +44,7 @@ class LedgerControllerTest extends Specification {
         and: "the result contains the expected transaction"
         result.data().size() == 1
         result.data().asList().get(0).id() == movement.id()
+        result.count() == 1
 
         and: "no more interactions are present"
         0 * _

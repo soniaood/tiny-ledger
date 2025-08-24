@@ -4,5 +4,6 @@ import java.util.Collection;
 
 public record ListResponse<T>(Collection<T> data,
                               Integer limit,
-                              Integer offset) {
+                              Integer offset,
+                              Integer count) {
 }
