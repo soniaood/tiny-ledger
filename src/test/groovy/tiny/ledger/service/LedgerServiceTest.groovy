@@ -101,9 +101,9 @@ class LedgerServiceTest extends Specification {
         0 * _
     }
 
-    def "Record movement with invalid withdrawal"() {
-        when: "recordMovement is called with an invalid transaction type"
-        target.recordMovement(10000L, Movement.MovementType.WITHDRAWAL, "Invalid transaction", "key")
+    def "Record movement with insufficient balance for withdrawal"() {
+        when: "recordMovement is called with a withdrawal that exceeds the balance"
+        target.recordMovement(10000L, Movement.MovementType.WITHDRAWAL, "Test withdrawal", null)
 
         then: "the balance doesn't allow it"
         1 * ledgerRepository.getCurrentBalanceInCents() >> 5000L
@@ -116,6 +116,21 @@ class LedgerServiceTest extends Specification {
         0 * _
     }
 
+    def "Record movement with same idempotency key returns same movement"() {
+        given: "a movement with idempotency key"
+        def movement = new Movement(1L, Movement.MovementType.DEPOSIT, 10000L, Instant.now(), "Transaction", "key123")
+
+        when: "recordMovement is called with the same idempotency key"
+        def movement2 = target.recordMovement(10000L, Movement.MovementType.DEPOSIT, "Transaction", "key123")
+
+        then: "movement id is found for idempotency key"
+        1 * ledgerRepository.findIdByIdempotencyKey("key123") >> Optional.of(movement.id())
+        1 * ledgerRepository.findById(movement.id()) >> Optional.of(movement)
+
+        and: "save is called only once"
+        movement.id() == movement2.id()
+    }
+
     def "Record movement with negative amount"() {
         when: "recordMovement is called with an invalid transaction type"
         target.recordMovement(-10000L, Movement.MovementType.DEPOSIT, "Invalid transaction", "key")
@@ -125,6 +140,26 @@ class LedgerServiceTest extends Specification {
         e.message == "Transaction amount must be greater than zero."
 
         and: "no interactions with the ledger service"
+        0 * _
+    }
+
+    def "Record movement handles multiple threads safelly"() {
+        given: "a valid deposit transaction"
+        def transactionRequest = new Movement(0L, Movement.MovementType.DEPOSIT, 10000L, Instant.now(), "Test deposit", null)
+
+        when: "multiple threads record movements concurrently"
+        def threads = (1..10).collect {
+            Thread.start {
+                target.recordMovement(transactionRequest.amountInCents(), transactionRequest.type(), transactionRequest.description(), transactionRequest.idempotencyKey())
+            }
+        }
+
+        threads*.join()
+
+        then: "the ledger repository is called with the correct parameters"
+        10 * ledgerRepository.save(_ as Movement)
+
+        and: "no more interactions are present"
         0 * _
     }
 

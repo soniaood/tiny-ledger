@@ -8,7 +8,9 @@ import java.util.Optional;
 
 @Repository
 public interface LedgerRepository {
-    Movement save(Movement movement);
+    Optional<Movement> findById(long id);
+    Optional<Long> findIdByIdempotencyKey(String idempotencyKey);
     List<Movement> findMovements(Integer limit, Integer offset);
+    Movement save(Movement movement);
     long getCurrentBalanceInCents();
 }

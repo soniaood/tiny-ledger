@@ -41,21 +41,6 @@ class LedgerRepositoryImplTest extends Specification {
         saved2.id() == 2L
     }
 
-    def "save only one movement with the same idempotency key (handles idempotency)"() {
-        given:
-        def movement1 = new Movement(0L, Movement.MovementType.DEPOSIT, 1000L,
-                Instant.now(), "First", "key123")
-        def movement2 = new Movement(0L, Movement.MovementType.DEPOSIT, 1000L,
-                Instant.now(), "Second", "key123")
-
-        when:
-        def saved1 = repository.save(movement1)
-        def saved2 = repository.save(movement2)
-
-        then:
-        saved1.id() == saved2.id()
-    }
-
     def "save movements without idempotency key"() {
         given:
         def movement = new Movement(0L, Movement.MovementType.DEPOSIT, 1000L,
@@ -90,7 +75,7 @@ class LedgerRepositoryImplTest extends Specification {
         movements[2].description() == "First"
     }
 
-    def "get movements with pagination"() {
+    def "find movements with pagination"() {
         given:
         5.times { i ->
             def movement = new Movement(0L, Movement.MovementType.DEPOSIT, 1000L,
@@ -103,6 +88,34 @@ class LedgerRepositoryImplTest extends Specification {
 
         then:
         movements.size() == 2
+    }
+
+    def "find movement by id"() {
+        given:
+        def movement = new Movement(0L, Movement.MovementType.DEPOSIT, 1000L,
+                Instant.now(), "Test deposit", null)
+        def savedMovement = repository.save(movement)
+
+        when:
+        def foundMovement = repository.findById(savedMovement.id())
+
+        then:
+        foundMovement.isPresent()
+        foundMovement.get().id() == savedMovement.id()
+    }
+
+    def "find movement id by idempotency key"() {
+        given:
+        def movement = new Movement(0L, Movement.MovementType.DEPOSIT, 1000L,
+                Instant.now(), "Test deposit", "key123")
+        def savedMovement = repository.save(movement)
+
+        when:
+        def foundId = repository.findIdByIdempotencyKey("key123")
+
+        then:
+        foundId.isPresent()
+        foundId.get() == savedMovement.id()
     }
 
     def "get current balance in cents returns balance with deposits and withdrawals successfully"() {
@@ -131,24 +144,5 @@ class LedgerRepositoryImplTest extends Specification {
 
         then:
         balance == 0L
-    }
-
-    def "ledger repository in memory implementation handles concurrent saves safely"() {
-        given:
-        def movements = []
-        10.times { i ->
-            movements << new Movement(0L, Movement.MovementType.DEPOSIT, 100L * i,
-                    Instant.now(), "Concurrent ${i}", null)
-        }
-
-        when:
-        def savedMovements = movements.parallelStream()
-                .map { movement -> repository.save((Movement) movement) }
-                .toList()
-
-        then:
-        savedMovements.size() == 10
-        savedMovements.collect { it.id() }.sort() == (1..10).toList()
-        repository.getCurrentBalanceInCents() == 4500L
     }
 }

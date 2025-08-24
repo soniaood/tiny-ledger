@@ -18,15 +18,15 @@ The API will be available at `http://localhost:8080`
 ## Features implemented
 
 - **Record Transactions**: Support for deposits and withdrawals (money movements)
-- **View Current Balance**: Real-time balance calculation
+- **View Current Balance**: High-performance balance retrieval 
 - **View Transaction History**: Paginated list of all transactions (newest first)
 - **Functional web application**: REST APIs with no UI required
-- **In-memory storage**: Using in-memory storage
-- **Input Validation**: Prevents invalid transactions (zero amounts, insufficient funds)
+- **In-memory storage**: Keeping data in memory using `ConcurrentHashMap` for simplicity
+- **Input Validation**: Prevents invalid transactions (negative amounts, zero amounts, insufficient funds)
 - **Idempotency Support**: Optional idempotency key to prevent duplicate transactions
 - **Thread Safety**: Concurrent operations supported
 - **No external dependencies**: Runs without additional software installation
-
+  
 ## API 
 For complete API details and specification, refer to the API specification file: [`spec.yaml`](src/main/resources/static/spec.yaml).
 
@@ -34,7 +34,7 @@ For complete API details and specification, refer to the API specification file:
 ```bash
 curl -X POST http://localhost:8080/transactions \
   -H "Content-Type: application/json" \
-  -d '{"amountInCents":"5000","type":"DEPOSIT","description":"Initial deposit"}'
+  -d '{"amountInCents":5000,"type":"DEPOSIT","description":"Initial deposit"}'
 ```
 
 **Response:**
@@ -44,7 +44,7 @@ curl -X POST http://localhost:8080/transactions \
   "type": "DEPOSIT",
   "amountInCents": "5000",
   "description": "Initial deposit",
-  "createdOn": "2024-01-15T10:30:00Z"
+  "createdOn": "2025-01-15T10:30:00Z"
 }
 ```
 
@@ -56,8 +56,8 @@ curl http://localhost:8080/balance
 **Response:**
 ```json
 {
-  "balanceInCents": "4000",
-  "asOfTime": "2024-01-15T10:35:00Z"
+  "balanceInCents": "5000",
+  "asOfTime": "2025-01-15T10:30:00Z"
 }
 ```
 
@@ -71,23 +71,16 @@ curl "http://localhost:8080/transactions?limit=5&offset=0"
 {
   "data": [
     {
-      "id": 2,
-      "type": "WITHDRAWAL",
-      "amountInCents": "1000",
-      "description": "Coffee purchase",
-      "createdOn": "2024-01-15T10:35:00Z"
-    },
-    {
       "id": 1,
       "type": "DEPOSIT",
       "amountInCents": "5000",
       "description": "Initial deposit",
-      "createdOn": "2024-01-15T10:30:00Z"
+      "createdOn": "2025-01-15T10:30:00Z"
     }
   ],
   "limit": 5,
   "offset": 0,
-  "count": 2
+  "count": 1
 }
 ```
 
@@ -111,21 +104,22 @@ curl -X POST http://localhost:8080/transactions \
 - Store all amounts as `long` in cents rather than using `BigDecimal` or `double`
 - Avoids floating-point precision issues while keeping calculations simple and fast
 
-### Thread Safety
-- Use `ConcurrentHashMap` and `AtomicLong` for in-memory storage
-- Supports concurrent API requests safely without complex locking
-
 ### API Design
 - RESTful endpoints with proper HTTP verbs and status codes
-- Industry standard, intuitive for API consumers
 
-### Data Storage
-- In-memory storage with `ConcurrentHashMap` as suggested in requirements
-- Simple, fast, and meets assignment constraints
+### Thread Safety
+- Service-level coordination: Uses ReentrantLock to ensure atomic business operations
+- Concurrent data structures: `ConcurrentHashMap` for thread-safe storage operations
+- Atomic balance tracking: `AtomicLong` for lock-free balance reads 
+- Race condition prevention: Idempotency checks, balance validation, and transaction recording happen atomically
 
 ### Idempotency Support
 - Added optional idempotency keys for duplicate prevention
 - Real-world API consideration for real production concerns
+
+### Balance Calculation Strategy
+- Balance is maintained in real-time using AtomicLong for fast reads 
+- Constant-time balance retrieval regardless of transaction volume
 
 ## Assumptions Made
 
@@ -134,6 +128,22 @@ curl -X POST http://localhost:8080/transactions \
 3. **No User Context**: Each request operates on the same ledger (no authentication needed as specified)
 4. **Immediate Consistency**: Balance calculations happen in real-time
 5. **Simple Validation**: Basic business rules (no zero amounts, no overdrafts)
+
+## Performance Characteristics
+### Current Performance Profile
+
+- Transaction Recording: Serialized writes with ReentrantLock for consistency 
+- Balance Retrieval: O(1) - Instant response via cached AtomicLong 
+- Transaction History: O(N log N) - For sorting, plus O(limit) for pagination 
+- Memory Usage: O(N) - Linear with transaction count 
+- Read Performance: Optimized for high-frequency balance checks
+
+### Scaling Considerations
+
+- Read-heavy workloads: Optimized with O(1) balance operations 
+- Write-heavy workloads: Serialized writes ensure consistency at cost of throughput 
+- High-frequency balance checks: Perform exceptionally well with cached balance strategy 
+- Large transaction volumes: Memory usage scales linearly, balance performance remains constant
 
 ## Technical Implementation
 
@@ -157,5 +167,7 @@ Controller → Service → Repository
 This implementation balances:
 - **Functionality**: Required features implemented
 - **Code Quality**: Clean, maintainable architecture
-- **Simplicity**: Avoided over-engineering while maintaining technical competence
-- **Real-world Awareness**: Included considerations like idempotency and thread safety
+- **Performance**: Optimized O(1) balance reads with strategic write serialization
+- **Real-world Awareness**: Included considerations like idempotency and thread safety 
+- **Thread Safety**: Robust concurrency handling with ReentrantLock coordination 
+- **Scalability**: Designed to handle high-frequency balance checks efficiently
