@@ -1,6 +1,6 @@
 # Tiny Ledger
 
-A tiny ledger API built with Spring Boot that supports deposits, withdrawals, and balance tracking.
+A tiny ledger API built with Spring Boot that supports deposits, withdrawals, and balance tracking with thread-safe operations.
 
 ## How to Run
 
@@ -17,18 +17,18 @@ The API will be available at `http://localhost:8080`
 
 ## Features implemented
 
-- **Record Transactions**: Support for deposits and withdrawals (money movements)
-- **View Current Balance**: High-performance balance retrieval 
-- **View Transaction History**: Paginated list of all transactions (newest first)
+- **Record Transactions**: Deposits and withdrawals (money movements)
+- **View Current Balance**: O(1) balance retrieval using atomic operations
+- **View Transaction History**: Paginated transaction listing (newest first)
 - **Functional web application**: REST APIs with no UI required
-- **In-memory storage**: Keeping data in memory using `ConcurrentHashMap` for simplicity
-- **Input Validation**: Prevents invalid transactions (negative amounts, zero amounts, insufficient funds)
+- **In-memory storage**: Keeping data in memory for simplicity
+- **Input Validation**: Prevents invalid transactions (invalid amounts, insufficient funds)
 - **Idempotency Support**: Optional idempotency key to prevent duplicate transactions
 - **Thread Safety**: Concurrent operations supported
 - **No external dependencies**: Runs without additional software installation
-  
+
 ## API 
-For complete API details and specification, refer to the API specification file: [`spec.yaml`](src/main/resources/static/spec.yaml).
+Complete API specification: [`spec.yaml`](src/main/resources/static/spec.yaml).
 
 ### 1. Record a transaction (deposit or withdrawal)
 ```bash
@@ -92,43 +92,39 @@ curl -X POST http://localhost:8080/transactions \
   -d '{"amountInCents":"2000","type":"DEPOSIT","description":"Salary"}'
 ```
 
-## Running Tests
-
+## Testing
+### Unit and Integration Tests
 ```bash
+# Run all tests
 ./gradlew test
+
+# Run only integration tests
+./gradlew test --tests "*Integration*"
 ```
 
 ### API Local Testing
-A comprehensive test script is provided to test all API functionality:
-
-```bash
-# Make the script executable
-chmod +x test-api.sh
-
-# Run the application
-./gradlew bootRun
-
-# In another terminal, run the test script
-./test-api.sh
-```
-
-The test script covers:
+A comprehensive test script is provided to test all API functionality with the application running locally:
 - Balance checking and transaction recording
 - Deposits, withdrawals, and transaction history
 - Idempotency key functionality
 - Input validation and error handling
 - Pagination testing
 
-**Note**: The test script requires `jq` for JSON formatting.
+```bash
+# Run the application
+./gradlew bootRun
+
+# In a separate terminal, run the test script
+chmod +x test-api.sh
+./test-api.sh
+```
+_Note: Requires jq for JSON formatting._
 
 ## Architecture & Design Decisions
 
 ### Money Precision
 - Store all amounts as `long` in cents rather than using `BigDecimal` or `double`
 - Avoids floating-point precision issues while keeping calculations simple and fast
-
-### API Design
-- RESTful endpoints with proper HTTP verbs and status codes
 
 ### Thread Safety
 - Service-level coordination: Uses ReentrantLock to ensure atomic business operations
@@ -152,22 +148,6 @@ The test script covers:
 4. **Immediate Consistency**: Balance calculations happen in real-time
 5. **Simple Validation**: Basic business rules (no zero amounts, no overdrafts)
 
-## Performance Characteristics
-### Current Performance Profile
-
-- Transaction Recording: Serialized writes with ReentrantLock for consistency 
-- Balance Retrieval: O(1) - Instant response via cached AtomicLong 
-- Transaction History: O(N log N) - For sorting, plus O(limit) for pagination 
-- Memory Usage: O(N) - Linear with transaction count 
-- Read Performance: Optimized for high-frequency balance checks
-
-### Scaling Considerations
-
-- Read-heavy workloads: Optimized with O(1) balance operations 
-- Write-heavy workloads: Serialized writes ensure consistency at cost of throughput 
-- High-frequency balance checks: Perform exceptionally well with cached balance strategy 
-- Large transaction volumes: Memory usage scales linearly, balance performance remains constant
-
 ## Technical Implementation
 
 ### Layer Architecture
@@ -180,12 +160,12 @@ Controller → Service → Repository
 - **Repository**: Data access abstraction, thread-safe operations
 
 ### Key Classes
-- `LedgerController`: REST endpoints
+- `LedgerController`: REST API endpoints
 - `LedgerService`: Business logic and validation
 - `LedgerRepository`: In-memory data operations
 - `Movement`: Immutable transaction record
 
-## Time Investment & Trade-offs
+## Trade-offs
 
 This implementation balances:
 - **Functionality**: Required features implemented
