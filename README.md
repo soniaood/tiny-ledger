@@ -129,15 +129,13 @@ _Note: Requires jq for JSON formatting._
 ### Thread Safety
 - Service-level coordination: Uses ReentrantLock to ensure atomic business operations
 - Concurrent data structures: `ConcurrentHashMap` for thread-safe storage operations
-- Atomic balance tracking: `AtomicLong` for lock-free balance reads 
-- Race condition prevention: Idempotency checks, balance validation, and transaction recording happen atomically
 
 ### Idempotency Support
 - Added optional idempotency keys for duplicate prevention
 - Real-world API consideration for real production concerns
 
 ### Balance Calculation Strategy
-- Balance is maintained in real-time using AtomicLong for fast reads 
+- Balance is maintained in real-time using `AtomicLong` for fast reads 
 - Constant-time balance retrieval regardless of transaction volume
 
 ## Assumptions Made
