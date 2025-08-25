@@ -146,7 +146,6 @@ _Note: Requires jq for JSON formatting._
 2. **Single Currency**: All amounts are in the same currency (cents)
 3. **No User Context**: Each request operates on the same ledger (no authentication needed as specified)
 4. **Immediate Consistency**: Balance calculations happen in real-time
-5. **Simple Validation**: Basic business rules (no zero amounts, no overdrafts)
 
 ## Technical Implementation
 
