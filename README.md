@@ -120,7 +120,7 @@ chmod +x test-api.sh
 ```
 _Note: Requires jq for JSON formatting._
 
-## Architecture & Design Decisions
+## Design Decisions
 
 ### Money Precision
 - Store all amounts as `long` in cents rather than using `BigDecimal` or `double`
@@ -147,29 +147,3 @@ _Note: Requires jq for JSON formatting._
 3. **No User Context**: Each request operates on the same ledger (no authentication needed as specified)
 4. **Immediate Consistency**: Balance calculations happen in real-time
 
-## Technical Implementation
-
-### Layer Architecture
-```
-Controller → Service → Repository
-```
-
-- **Controller**: HTTP handling, request/response mapping, input validation
-- **Service**: Business logic, validation rules, transaction orchestration
-- **Repository**: Data access abstraction, thread-safe operations
-
-### Key Classes
-- `LedgerController`: REST API endpoints
-- `LedgerService`: Business logic and validation
-- `LedgerRepository`: In-memory data operations
-- `Movement`: Immutable transaction record
-
-## Trade-offs
-
-This implementation balances:
-- **Functionality**: Required features implemented
-- **Code Quality**: Clean, maintainable architecture
-- **Performance**: Optimized O(1) balance reads with strategic write serialization
-- **Real-world Awareness**: Included considerations like idempotency and thread safety 
-- **Thread Safety**: Robust concurrency handling with ReentrantLock coordination 
-- **Scalability**: Designed to handle high-frequency balance checks efficiently
